@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // App State - Default column view points to Active tasks
     let todos = JSON.parse(localStorage.getItem('todos')) || [];
     let currentFilter = 'active';
+    
+    // State variable to track the last notified hour and prevent skipped intervals on hosted environments
+    let lastNotificationHour = null;
 
     // Set Date Dynamic Values
     const options = { weekday: 'long', month: 'short', day: 'numeric' };
@@ -164,12 +167,14 @@ document.addEventListener('DOMContentLoaded', () => {
         requestNotificationPermission();
     }, { once: true });
 
-    // Inspect timestamps precisely on top of the hour (minute value === 0)
+    // Inspect timestamps precisely every 10 seconds to counteract background tab throttling
     const checkAndNotify = () => {
         const now = new Date();
         const minutes = now.getMinutes();
+        const currentHour = now.getHours();
 
-        if (minutes === 0) {
+        // Check if we hit minute 00 and haven't already sent a reminder for this exact hour
+        if (minutes === 0 && lastNotificationHour !== currentHour) {
             const activeTasks = todos.filter(todo => !todo.completed).length;
 
             if (activeTasks > 0 && Notification.permission === 'granted') {
@@ -183,12 +188,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: `It's ${hourString}! You have ${activeTasks} active task${activeTasks !== 1 ? 's' : ''} remaining to complete.`,
                     icon: 'https://cdn-icons-png.flaticon.com/512/906/906334.png'
                 });
+
+                // Lock this specific hour so it won't repeatedly prompt during the minute 0 window
+                lastNotificationHour = currentHour;
             }
+        }
+        
+        // When the clock moves to minute 01 and beyond, clean the lock variable
+        if (minutes !== 0) {
+            lastNotificationHour = null;
         }
     };
     
-    // Interval runner checks conditions every 60 seconds (60000ms) smoothly
-    setInterval(checkAndNotify, 60000);
+    // Interval runner checks conditions every 10 seconds (10000ms) to ensure it never misses the o'clock mark
+    setInterval(checkAndNotify, 10000);
 
     // Initial Render
     renderTodos();
