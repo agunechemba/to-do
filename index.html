@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow // Professional To-Do</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-title">
+                <a href="https://yourwebsite.com">
+                  <h1>TaskFlow</h1>
+                </a>
+
+                <p id="date-display">Wednesday, May 27</p>
+            </div>
+            <div class="header-stats">
+                <span id="task-counter">0 Tasks</span>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <form id="todo-form" class="todo-form">
+                <div class="input-group">
+                    <i data-lucide="plus" class="input-icon"></i>
+                    <input type="text" id="todo-input" placeholder="Add a new task..." required autocomplete="off" maxlength="100">
+                </div>
+                <button type="submit" class="btn-submit" aria-label="Add task">Add</button>
+            </form>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+                <button class="filter-btn" data-filter="all">All</button>
+            </div>
+
+            <ul id="todo-list" class="todo-list"></ul>
+
+            <div id="empty-state" class="empty-state">
+                <i data-lucide="clipboard-list" class="empty-icon"></i>
+                <p>All caught up!</p>
+                <span>Add a task to get your day started.</span>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

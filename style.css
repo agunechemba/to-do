@@ -1,0 +1,344 @@
+/* --- Variables & Reset --- */
+
+/* Light Theme Variables (Default) */
+:root {
+    --bg-primary: #f8fafc;
+    --bg-surface: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --brand-primary: #4f46e5;
+    --brand-primary-hover: #4338ca;
+    --brand-light: #eef2ff;
+    --border-color: #e2e8f0;
+    --success: #10b981;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    --transition: all 0.2s ease;
+}
+
+/* Dark Theme Variables (Automatic Device Adaptation) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #0f172a;       
+        --bg-surface: #1e293b;       
+        --text-primary: #f8fafc;     
+        --text-secondary: #94a3b8;   
+        --text-muted: #64748b;       
+        --brand-primary: #6366f1;    
+        --brand-primary-hover: #4f46e5;
+        --brand-light: #312e81;      
+        --border-color: #334155;     
+        --danger-light: #451a03;
+    }
+    
+    .app-container {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    transition: background-color var(--transition), color var(--transition);
+}
+
+/* --- Container Layout --- */
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    margin-top: 24px;
+    transition: background var(--transition), border var(--transition);
+}
+
+/* --- Header --- */
+.app-header {
+    padding: 24px 24px 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-title h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+.header-title p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+#task-counter {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--brand-light);
+    color: var(--brand-primary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: var(--transition);
+}
+
+/* --- Main Layout --- */
+.app-main {
+    padding: 20px;
+}
+
+/* --- Form Input --- */
+.todo-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    position: relative;
+    flex: 1;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    width: 18px;
+    height: 18px;
+}
+
+.todo-form input {
+    width: 100%;
+    padding: 12px 14px 12px 42px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
+.todo-form input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    background: var(--bg-surface);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.btn-submit {
+    padding: 0 18px;
+    background: var(--brand-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-submit:hover {
+    background: var(--brand-primary-hover);
+}
+
+/* --- Filter Navigation --- */
+.filter-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-primary);
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    transition: var(--transition);
+}
+
+.filter-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 8px 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: calc(var(--radius-sm) - 2px);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-btn.active {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+}
+
+/* --- Task Items List --- */
+.todo-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    animation: fadeIn 0.25s ease;
+    transition: var(--transition);
+}
+
+.todo-item:hover {
+    border-color: var(--text-muted);
+}
+
+.todo-item-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.todo-text-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+/* Custom Checkbox Design */
+.checkbox-container {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--text-muted);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.checkbox-container i {
+    width: 12px;
+    height: 12px;
+    color: white;
+    display: none;
+}
+
+.todo-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+/* Modern Time Stamp Badge */
+.time-tag {
+    font-size: 0.725rem;
+    font-weight: 500;
+    color: var(--brand-primary);
+    background: var(--brand-light);
+    align-self: flex-start;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-top: 2px;
+    transition: var(--transition);
+}
+
+.todo-item.completed .time-tag {
+    background: var(--border-color);
+    color: var(--text-secondary);
+}
+
+/* Completed Task State Modifications */
+.todo-item.completed {
+    background: var(--bg-primary);
+    border-color: transparent;
+}
+
+.todo-item.completed .checkbox-container {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.todo-item.completed .checkbox-container i {
+    display: block;
+}
+
+.todo-item.completed .todo-text {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+/* --- App States --- */
+.empty-state {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.empty-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.empty-state p {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.empty-state span {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Tablet / Desktop adjustments --- */
+@media (min-width: 768px) {
+    body {
+        padding: 40px 20px;
+    }
+    .app-container {
+        margin-top: 40px;
+    }
+}
