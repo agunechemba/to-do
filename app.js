@@ -154,7 +154,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- System Level Notification Engine ---
+// --- System Level Notification Engine (Mobile & Desktop Compatible) ---
+    
+    // Register the Service Worker for Android background support
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered successfully!'))
+                .catch(err => console.error('Service Worker registration failed:', err));
+        });
+    }
+
     const requestNotificationPermission = async () => {
         if (!('Notification' in window)) return;
         if (Notification.permission === 'default') {
@@ -167,13 +177,12 @@ document.addEventListener('DOMContentLoaded', () => {
         requestNotificationPermission();
     }, { once: true });
 
-    // Inspect timestamps precisely every 10 seconds to counteract background tab throttling
+    // Inspect timestamps precisely every 10 seconds
     const checkAndNotify = () => {
         const now = new Date();
         const minutes = now.getMinutes();
         const currentHour = now.getHours();
 
-        // Check if we hit minute 00 and haven't already sent a reminder for this exact hour
         if (minutes === 0 && lastNotificationHour !== currentHour) {
             const activeTasks = todos.filter(todo => !todo.completed).length;
 
@@ -184,23 +193,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     hour12: true 
                 });
 
-                new Notification("TaskFlow Reminder", {
+                const title = "TaskFlow Reminder";
+                const options = {
                     body: `It's ${hourString}! You have ${activeTasks} active task${activeTasks !== 1 ? 's' : ''} remaining to complete.`,
-                    icon: 'https://cdn-icons-png.flaticon.com/512/906/906334.png'
-                });
+                    icon: 'https://cdn-icons-png.flaticon.com/512/906/906334.png',
+                    badge: 'https://cdn-icons-png.flaticon.com/512/906/906334.png', // Small icon for mobile status bars
+                    vibrate: [200, 100, 200] // Haptic physical feedback for Android devices
+                };
 
-                // Lock this specific hour so it won't repeatedly prompt during the minute 0 window
+                // MOBILE FIX: Use service worker registration if available, fallback to standard desktop notification
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then((registration) => {
+                        registration.showNotification(title, options);
+                    });
+                } else {
+                    new Notification(title, options);
+                }
+
                 lastNotificationHour = currentHour;
             }
         }
         
-        // When the clock moves to minute 01 and beyond, clean the lock variable
         if (minutes !== 0) {
             lastNotificationHour = null;
         }
     };
     
-    // Interval runner checks conditions every 10 seconds (10000ms) to ensure it never misses the o'clock mark
     setInterval(checkAndNotify, 10000);
 
     // Initial Render
