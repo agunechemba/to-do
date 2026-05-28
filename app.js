@@ -81,6 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (currentFilter) {
             case 'active':
                 result = todos.filter(todo => !todo.completed);
+                // PRODUCTION FIX: Sort by creation timestamp ID in ascending order (Oldest tasks stay at the top)
+                result.sort((a, b) => Number(a.id) - Number(b.id));
                 break;
             case 'completed':
                 result = todos.filter(todo => todo.completed);
