@@ -44,25 +44,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Filter Column Router Logic
-    const getFilteredTodos = () => {
-        switch (currentFilter) {
-            case 'active':
-                return todos.filter(todo => !todo.completed);
-            case 'completed':
-                return todos.filter(todo => todo.completed);
-            default:
-                return todos;
-        }
-    };
-
-    // Readable Time Formatter String
-    const getFormattedTime = () => {
-        return new Date().toLocaleTimeString('en-US', {
+    // Smart Date-Aware Completion Formatter
+    const getReadableCompletionTime = (isoString) => {
+        if (!isoString) return '';
+        
+        const completedDate = new Date(isoString);
+        const today = new Date();
+        
+        // Format the clock portion smoothly (e.g., 2:15 PM)
+        const timeString = completedDate.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true
         });
+        
+        // Check if the calendar dates match perfectly
+        const isToday = completedDate.getDate() === today.getDate() &&
+                        completedDate.getMonth() === today.getMonth() &&
+                        completedDate.getFullYear() === today.getFullYear();
+                        
+        if (isToday) {
+            return `Today at ${timeString}`;
+        } else {
+            const dateString = completedDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            });
+            return `${dateString} at ${timeString}`;
+        }
+    };
+
+    // Filter Column & Sorting Router Logic
+    const getFilteredTodos = () => {
+        let result = [];
+        
+        switch (currentFilter) {
+            case 'active':
+                result = todos.filter(todo => !todo.completed);
+                break;
+            case 'completed':
+                result = todos.filter(todo => todo.completed);
+                // SORT MATRIX: Most recently completed tasks move to the top safely
+                result.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+                break;
+            default:
+                result = todos;
+                break;
+        }
+        return result;
     };
 
     // Primary DOM Renderer Engine
@@ -75,8 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
             li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
             li.dataset.id = todo.id;
 
+            // Render readable dates derived dynamically from stored ISO timestamps
             const timeTagHTML = todo.completedAt 
-                ? `<span class="time-tag">Completed at ${todo.completedAt}</span>` 
+                ? `<span class="time-tag">Completed ${getReadableCompletionTime(todo.completedAt)}</span>` 
                 : '';
 
             li.innerHTML = `
@@ -134,7 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return { 
                     ...todo, 
                     completed: isNowCompleted,
-                    completedAt: isNowCompleted ? getFormattedTime() : null
+                    // Persist the full raw timestamp object string for processing later
+                    completedAt: isNowCompleted ? new Date().toISOString() : null
                 };
             }
             return todo;
@@ -154,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-// --- System Level Notification Engine (Mobile & Desktop Compatible) ---
+    // --- System Level Notification Engine (Mobile & Desktop Compatible) ---
     
     // Register the Service Worker for Android background support
     if ('serviceWorker' in navigator) {
@@ -197,8 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const options = {
                     body: `It's ${hourString}! You have ${activeTasks} active task${activeTasks !== 1 ? 's' : ''} remaining to complete.`,
                     icon: 'https://cdn-icons-png.flaticon.com/512/906/906334.png',
-                    badge: 'https://cdn-icons-png.flaticon.com/512/906/906334.png', // Small icon for mobile status bars
-                    vibrate: [200, 100, 200] // Haptic physical feedback for Android devices
+                    badge: 'https://cdn-icons-png.flaticon.com/512/906/906334.png', 
+                    vibrate: [200, 100, 200] 
                 };
 
                 // MOBILE FIX: Use service worker registration if available, fallback to standard desktop notification
