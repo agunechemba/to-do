@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let todos = JSON.parse(localStorage.getItem('todos')) || [];
     let currentFilter = 'active';
     
-    // State variable to track the last notified hour and prevent skipped intervals on hosted environments
-    let lastNotificationHour = null;
+    // Tracking variable to capture unique 15-minute intervals (e.g., "14:30") and prevent repeated triggers
+    let lastNotifiedSlot = null;
 
     // Set Date Dynamic Values
     const options = { weekday: 'long', month: 'short', day: 'numeric' };
@@ -216,7 +216,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const minutes = now.getMinutes();
         const currentHour = now.getHours();
 
-        if (minutes === 0 && lastNotificationHour !== currentHour) {
+        // Check if the clock matches a quarter-hour boundary point
+        const isQuarterHour = (minutes === 0 || minutes === 15 || minutes === 30 || minutes === 45);
+        
+        // Produce a composite tracking key for this unique window block (e.g., "13:45")
+        const currentSlotId = `${currentHour}:${minutes}`;
+
+        if (isQuarterHour && lastNotifiedSlot !== currentSlotId) {
             const activeTasks = todos.filter(todo => !todo.completed).length;
 
             if (activeTasks > 0 && Notification.permission === 'granted') {
@@ -243,12 +249,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     new Notification(title, options);
                 }
 
-                lastNotificationHour = currentHour;
+                // Explicitly lock this slot timeline to prevent looping during the remaining seconds of this minute
+                lastNotifiedSlot = currentSlotId;
             }
         }
         
-        if (minutes !== 0) {
-            lastNotificationHour = null;
+        // Safely clear the tracking lock as soon as the clock rolls onto a standard minute
+        if (!isQuarterHour) {
+            lastNotifiedSlot = null;
         }
     };
     
