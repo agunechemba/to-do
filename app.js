@@ -153,12 +153,19 @@ document.addEventListener('DOMContentLoaded', () => {
         todoInput.focus();
     });
 
-    // Touch Delegation Router - Seamless switching with no delete buttons
+    // Touch Delegation Router - Upgraded with Safety Confirmation Pop-up
     todoList.addEventListener('click', (e) => {
         const todoItem = e.target.closest('.todo-item');
         if (!todoItem) return;
         
         const id = todoItem.dataset.id;
+        const targetTodo = todos.find(todo => todo.id === id);
+
+        // SAFETY FILTER: Intercept and request confirmation only if completing an active task
+        if (targetTodo && !targetTodo.completed) {
+            const userConfirmed = confirm(`Done?\n"${targetTodo.text}"`);
+            if (!userConfirmed) return; // Terminate execution immediately if they press "Cancel"
+        }
 
         todos = todos.map(todo => {
             if (todo.id === id) {
