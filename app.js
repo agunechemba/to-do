@@ -8,10 +8,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('empty-state');
     const dateDisplay = document.getElementById('date-display');
 
+    // Custom Modal DOM Elements
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const modalTaskText = document.getElementById('modal-task-text');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+
     // App State - Default column view points to Active tasks
     let todos = JSON.parse(localStorage.getItem('todos')) || [];
     let currentFilter = 'active';
     
+    // Safety Cache to hold onto the task item ID currently being reviewed in the modal layout
+    let pendingTaskId = null;
+
     // Tracking variable to capture unique 15-minute intervals (e.g., "14:30") and prevent repeated triggers
     let lastNotifiedSlot = null;
 
@@ -153,27 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
         todoInput.focus();
     });
 
-    // Touch Delegation Router - Upgraded with Safety Confirmation Pop-up
-    todoList.addEventListener('click', (e) => {
-        const todoItem = e.target.closest('.todo-item');
-        if (!todoItem) return;
-        
-        const id = todoItem.dataset.id;
-        const targetTodo = todos.find(todo => todo.id === id);
-
-        // SAFETY FILTER: Intercept and request confirmation only if completing an active task
-        if (targetTodo && !targetTodo.completed) {
-            const userConfirmed = confirm(`Done?\n"${targetTodo.text}"`);
-            if (!userConfirmed) return; // Terminate execution immediately if they press "Cancel"
-        }
-
+    // Helper Action to Toggle Task Completion State safely
+    const toggleTodoState = (id) => {
         todos = todos.map(todo => {
             if (todo.id === id) {
                 const isNowCompleted = !todo.completed;
                 return { 
                     ...todo, 
                     completed: isNowCompleted,
-                    // Persist the full raw timestamp object string for processing later
                     completedAt: isNowCompleted ? new Date().toISOString() : null
                 };
             }
@@ -182,7 +178,43 @@ document.addEventListener('DOMContentLoaded', () => {
         
         saveToLocalStorage();
         renderTodos();
+    };
+
+    // Touch Delegation Router - Upgraded with Modern HTML Modal Modal interceptor
+    todoList.addEventListener('click', (e) => {
+        const todoItem = e.target.closest('.todo-item');
+        if (!todoItem) return;
+        
+        const id = todoItem.dataset.id;
+        const targetTodo = todos.find(todo => todo.id === id);
+
+        // MODAL INTERCEPT: If moving an Active task to Completed, reveal custom UI components instead of executing
+        if (targetTodo && !targetTodo.completed) {
+            pendingTaskId = id; // Store ID reference safely
+            modalTaskText.textContent = `"${targetTodo.text}"`;
+            confirmationModal.style.display = 'flex'; // Display modal overlay
+        } else {
+            // Unchecking completed tasks back to active happens instantly without prompting
+            toggleTodoState(id);
+        }
     });
+
+    // Custom Modal Event Handlers
+    modalConfirmBtn.addEventListener('click', () => {
+        if (pendingTaskId) {
+            toggleTodoState(pendingTaskId);
+        }
+        closeModal();
+    });
+
+    modalCancelBtn.addEventListener('click', () => {
+        closeModal();
+    });
+
+    const closeModal = () => {
+        confirmationModal.style.display = 'none';
+        pendingTaskId = null; // Clean up state memory
+    };
 
     // Handle Filter Buttons Action Layout Switches
     filterButtons.forEach(btn => {
