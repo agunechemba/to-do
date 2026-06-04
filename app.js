@@ -1,20 +1,4 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // ========================================================
-    // STORAGE PERSISTENCE ENGINE (WIPE-PROOF SHIELD)
-    // ========================================================
-    if (navigator.storage && navigator.storage.persist) {
-        try {
-            const isPersisted = await navigator.storage.persist();
-            if (isPersisted) {
-                console.log("Storage status: PERSISTENT. Protected from automated system purges.");
-            } else {
-                console.log("Storage status: BEST-EFFORT. Device denied background persistence.");
-            }
-        } catch (err) {
-            console.error("Failed to request storage persistence runtime lock:", err);
-        }
-    }
-
+document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const todoForm = document.getElementById('todo-form');
     const todoInput = document.getElementById('todo-input');
@@ -30,8 +14,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalCancelBtn = document.getElementById('modal-cancel-btn');
     const modalConfirmBtn = document.getElementById('modal-confirm-btn');
 
-    // App State - Instantiated as empty; populated asynchronously from IndexedDB
-    let todos = [];
+    // App State - Default column view points to Active tasks
+    let todos = JSON.parse(localStorage.getItem('todos')) || [];
     let currentFilter = 'active';
     
     // Safety Cache to hold onto the task item ID currently being reviewed in the modal layout
@@ -51,13 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // UPGRADE: Asynchronous Save state wrapper targeting IndexedDB
-    const saveToIndexedDB = async () => {
-        try {
-            await idbKeyval.set('todos', todos);
-        } catch (err) {
-            console.error("Failed to execute write transaction to IndexedDB:", err);
-        }
+    // Save state to Local Storage
+    const saveToLocalStorage = () => {
+        localStorage.setItem('todos', JSON.stringify(todos));
     };
 
     // Update Counter Strings & Empty States
@@ -162,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // Form Task Injection Event
-    todoForm.addEventListener('submit', async (e) => {
+    todoForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const taskText = todoInput.value.trim();
         if (!taskText) return;
@@ -175,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         todos.unshift(newTodo);
-        await saveToIndexedDB(); // Wait for non-blocking database write sequence
+        saveToLocalStorage();
         renderTodos();
         
         todoInput.value = '';
@@ -183,21 +163,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Helper Action to Toggle Task Completion State safely
-    const toggleTodoState = async (id) => {
+    const toggleTodoState = (id) => {
         todos = todos.map(todo => {
             if (todo.id === id) {
                 const isNowCompleted = !todo.completed;
                 return { 
                     ...todo, 
                     completed: isNowCompleted,
-                    // Persist the full raw timestamp object string for processing later
                     completedAt: isNowCompleted ? new Date().toISOString() : null
                 };
             }
             return todo;
         });
         
-        await saveToIndexedDB(); // Wait for non-blocking database write sequence
+        saveToLocalStorage();
         renderTodos();
     };
 
@@ -322,26 +301,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     setInterval(checkAndNotify, 10000);
 
-    // ========================================================
-    // INITIALIZATION & SEAMLESS DATA MIGRATION MATRIX
-    // ========================================================
-    try {
-        const localBackup = localStorage.getItem('todos');
-        if (localBackup) {
-            // One-time auto-migration: pull old tasks, move to database, wipe localStorage footprint
-            todos = JSON.parse(localBackup);
-            await idbKeyval.set('todos', todos);
-            localStorage.removeItem('todos');
-            console.log("Migration Successful: Fallback records moved safely to IndexedDB.");
-        } else {
-            // Standard performance lane: load directly from the async database
-            todos = await idbKeyval.get('todos') || [];
-        }
-    } catch (err) {
-        console.error("Database initialization failed, mounting empty array state:", err);
-        todos = [];
-    }
-
-    // Initial Render once async data retrieval completes
+    // Initial Render
     renderTodos();
 });
