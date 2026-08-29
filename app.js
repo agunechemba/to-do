@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Safety Cache to hold onto the task item ID currently being reviewed in the modal layout
     let pendingTaskId = null;
 
-    // Tracking variable to capture unique 15-minute intervals (e.g., "14:30") and prevent repeated triggers
+    // Tracking variable to capture unique hourly intervals (e.g., "14:00") and prevent repeated triggers
     let lastNotifiedSlot = null;
 
     // Set Date Dynamic Values
@@ -255,13 +255,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const minutes = now.getMinutes();
         const currentHour = now.getHours();
 
-        // Check if the clock matches a quarter-hour boundary point
-        const isQuarterHour = (minutes === 0 || minutes === 15 || minutes === 30 || minutes === 45);
+        // Check if the clock matches the top of the hour (e.g., 1:00, 2:00, 3:00, etc.)
+        const isTopOfHour = (minutes === 0);
         
-        // Produce a composite tracking key for this unique window block (e.g., "13:45")
+        // Produce a composite tracking key for this unique hour block (e.g., "14:00")
         const currentSlotId = `${currentHour}:${minutes}`;
 
-        if (isQuarterHour && lastNotifiedSlot !== currentSlotId) {
+        if (isTopOfHour && lastNotifiedSlot !== currentSlotId) {
             const activeTasks = todos.filter(todo => !todo.completed).length;
 
             if (activeTasks > 0 && Notification.permission === 'granted') {
@@ -293,8 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Safely clear the tracking lock as soon as the clock rolls onto a standard minute
-        if (!isQuarterHour) {
+        // Safely clear the tracking lock as soon as the clock rolls onto the next minute
+        if (!isTopOfHour) {
             lastNotifiedSlot = null;
         }
     };
